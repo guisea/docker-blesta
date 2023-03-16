@@ -1,0 +1,3 @@
+# Docker Blesta
+
+Blesta containerized ;)

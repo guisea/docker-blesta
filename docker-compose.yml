@@ -1,0 +1,47 @@
+version: '3'
+
+networks:
+  backend:
+  traefik-net:
+    external: true
+
+volumes:
+  data:
+  db_data:
+services:
+  db:
+    container_name: blesta_db
+    image: mariadb:10.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: blesta
+      MYSQL_PASSWORD: blesta
+      MYSQL_DATABASE: some_blesta_db
+      TZ: Pacific/Auckland
+    networks:
+      - backend
+    volumes:
+      - db_data:/var/lib/mysql
+
+  web-blesta:
+    build: .
+    container_name: blesta_web
+    environment:
+      BLESTA_UNBRANDED: "true"
+      BLESTA_ROBOTS_TXT: "true"
+      BLESTA_MM_LICENSE: xxXXxx
+    volumes:
+      - data:/var/www/app/
+    networks:
+      traefik-net:
+        ipv4_address: 10.14.0.11
+      backend:
+    labels:
+      - traefik.http.routers.blesta.rule=Host(`dev.blestadev.co.nz`)
+      - traefik.http.routers.blesta.entrypoints=web,websecure
+      - traefik.http.routers.blesta.tls=true
+      - traefik.http.services.blesta.loadbalancer.server.port=80
+      - traefik.enable=true
+      - traefik.docker.network=traefik-net
+    depends_on:
+      - db
